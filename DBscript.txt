@@ -1,0 +1,478 @@
+ALTER SESSION SET NLS_DATE_FORMAT='DD-MON-YYYY';   
+
+  
+DROP TABLE SUPPLIERLINES;  
+DROP TABLE FEEDBACK;  
+DROP TABLE RESERVATION;  
+DROP TABLE ORDERLINES;  
+DROP TABLE VEHICLES;  
+DROP TABLE INGREDIENTS;  
+DROP TABLE MENU;  
+DROP TABLE ORDERS;  
+DROP TABLE STAFF;  
+DROP TABLE SUPPLIER;  
+DROP TABLE OUTLETS;  
+DROP TABLE CUSTOMER;
+DROP VIEW CUSTOMER_ORDER;
+DROP VIEW STAFF_CUSTOMER;  
+
+  
+CREATE TABLE MENU(	  
+    item_no CHAR(3) NOT NULL,  
+    description VARCHAR2(30) NOT NULL,  
+    type VARCHAR2(10) NOT NULL,  
+    price FLOAT NOT NULL,  
+    PRIMARY KEY(item_no),  
+    CONSTRAINT chk_price_menu CHECK (price>0),
+    UNIQUE(description)
+    );  
+
+INSERT INTO MENU VALUES ('P01', 'Margherita Pizza', 'Pizza', 35.90);  
+INSERT INTO MENU VALUES ('P02', 'Chicken Pepperoni Pizza', 'Pizza', 38.90);  
+INSERT INTO MENU VALUES ('P03', 'Hawaiian Pizza', 'Pizza', 37.90);  
+INSERT INTO MENU VALUES ('P04', 'BBQ Chicken Pizza', 'Pizza', 37.90);  
+INSERT INTO MENU VALUES ('P05', 'Veggie Pizza', 'Pizza', 35.90);  
+INSERT INTO MENU VALUES ('P06', 'Tuna Pizza', 'Pizza', 36.90);  
+INSERT INTO MENU VALUES ('P07', 'Mushroom Pizza', 'Pizza', 35.90);  
+INSERT INTO MENU VALUES ('P08', 'Spinach and Feta Pizza', 'Pizza', 35.90);  
+INSERT INTO MENU VALUES ('P09', 'Aloha Chicken Pizza', 'Pizza', 38.90);  
+INSERT INTO MENU VALUES ('P10', 'Beef Pepperoni Pizza', 'Pizza', 39.90);  
+INSERT INTO MENU VALUES ('S01', 'French Fries', 'Side', 7.90);  
+INSERT INTO MENU VALUES ('S02', 'Garlic Bread', 'Side', 6.90);  
+INSERT INTO MENU VALUES ('S03', 'Mushroom Soup', 'Side', 4.90);  
+INSERT INTO MENU VALUES ('S04', 'Chicken Wings', 'Side', 12.90);  
+INSERT INTO MENU VALUES ('S05', 'Caesar Salad', 'Side', 10.90);  
+INSERT INTO MENU VALUES ('B01', 'Coke', 'Beverage', 3.90);  
+INSERT INTO MENU VALUES ('B02', 'Sprite', 'Beverage', 3.90);  
+INSERT INTO MENU VALUES ('B03', 'Iced Lemon Tea', 'Beverage', 3.90);  
+INSERT INTO MENU VALUES ('B04', 'Orange Juice', 'Beverage', 7.90);  
+INSERT INTO MENU VALUES ('B05', 'Mineral Water', 'Beverage', 3.00);  
+  
+
+CREATE TABLE OUTLETS(  
+    outlet_no CHAR(2) NOT NULL,  
+    telephone_no VARCHAR2(11) NOT NULL,  
+    street VARCHAR2(50) NOT NULL,  
+    suburb VARCHAR2(50) NOT NULL,  
+    postcode CHAR(5) NOT NULL,  
+    PRIMARY KEY(outlet_no),
+    UNIQUE(telephone_no), 
+    CONSTRAINT chk_telephone_no_outlets CHECK (LENGTH(telephone_no) >= 10 AND REGEXP_LIKE(telephone_no, '^[0-9]+$'))
+    );  
+
+INSERT INTO OUTLETS VALUES('01','0199889608','Jalan Damansara','Damansara Utama','50490');  
+INSERT INTO OUTLETS VALUES('02','0176103566','Jalan Bangsar','Bangsar Baru','59200');  
+INSERT INTO OUTLETS VALUES('03','0142426608','Jalan SS2','Kelana Jaya','47300');  
+INSERT INTO OUTLETS VALUES('04','0102797947','Jalan Merbah','Shah Alam','40000');  
+INSERT INTO OUTLETS VALUES('05','0139341596','Jalan Setia Impian','Setia Alam','40710');  
+INSERT INTO OUTLETS VALUES('06','0198472932','Jalan Bukit Jawa','Klang','41000');  
+INSERT INTO OUTLETS VALUES('07','0125150152','Jalan Subang','Subang Jaya','47600');  
+INSERT INTO OUTLETS VALUES('08','0168078829','Jalan Nuri','Damansara Utama','47810');  
+
+
+CREATE TABLE STAFF(  
+    staff_no CHAR(4) NOT NULL,  
+    outlet_no CHAR(2) NOT NULL,  
+    first_name VARCHAR2(50) NOT NULL,  
+    last_name VARCHAR2(50) NOT NULL,  
+    title VARCHAR2(4),  
+    phone_no VARCHAR2(11) NOT NULL,  
+    street VARCHAR2(50) NOT NULL,  
+    suburb VARCHAR2(50) NOT NULL,  
+    postcode CHAR(5) NOT NULL,  
+    position VARCHAR2(50) NOT NULL,  
+    date_of_entry DATE NOT NULL,  
+    disciplinary_action VARCHAR2(50),  
+    PRIMARY KEY(staff_no),  
+    FOREIGN KEY(outlet_no) REFERENCES OUTLETS (outlet_no),
+    UNIQUE(phone_no),
+    CONSTRAINT chk_phone_no_staff CHECK (LENGTH(phone_no) >= 10 AND REGEXP_LIKE(phone_no, '^[0-9]+$'))  
+    );  
+--These indexes are created as STAFF table contains a large amount of data, and we need to search data based on the staff's last name and position in different user query. The indexes allow the database system to quickly locate relevant rows based on staff last names and positon, avoiding the need for a full table scan during search queries.
+CREATE INDEX staff_last_name_idx ON STAFF(last_name);
+CREATE INDEX staff_position_idx ON STAFF(position);
+
+
+INSERT INTO STAFF VALUES('1001','03','Ming Yu','Wong','Ms.','0122036652','Jalan SS2','Kelana Jaya','47300','Chef','01-FEB-2021',NULL);  
+INSERT INTO STAFF VALUES('1002','05','Jane','Cheah','Ms.', '0167905505','Jalan Setia Impian','Setia Alam','40710','Manager','01-NOV-2022',NULL);  
+INSERT INTO STAFF VALUES('1003','05','Zhen','Han','Mr.','0126294114','Jalan Setia Impian','Setia Alam','40710','Chef','01-NOV-2022',NULL);  
+INSERT INTO STAFF VALUES('1004','01','Jet Lor','Chia','Mr.','0192347157','Jalan SS22','Damansara Utama','47400','Manager','01-MAY-2022',NULL);  
+INSERT INTO STAFF VALUES('1005','02','Jin Heng','Kong','Mr.','0146101484','Jalan Telawi','Bangsar Baru','59100','Rider','01-OCT-2022',NULL);  
+INSERT INTO STAFF VALUES('1006','02','Shao Wen','Wong','Ms.','0161366825','Jalan Bangsar','Bangsar Baru','59200','Waiter','01-MAR-2023',NULL);  
+INSERT INTO STAFF VALUES('1007','03','Bo Hai','Yap','Mr.','0182206400','Jalan SS5','Kelana Jaya','47300','Cashier','01-SEP-2022','Verbal Warning');  
+INSERT INTO STAFF VALUES('1008','08','Muhammad Abdul Bakar','bin Rashid','Mr.','0176263246','Jalan SS21','Damansara Utama','47810','Rider','01-SEP-2022','Written Warning');  
+INSERT INTO STAFF VALUES('1009','05','Cheen Sue','Chen','Mrs.','0107192724','Jalan Setia Impian','Setia Alam','40710','Chef','01-DEC-2022',NULL);  
+INSERT INTO STAFF VALUES('1010','06','Hai Jing','Lau','Mr.','0109214441','Jalan Mohet','Klang','41000','Cashier','01-APR-2022',NULL); 
+INSERT INTO STAFF VALUES('1011','08','Narenda','Darmodardas Modi','Ms.','0143347157','Jalan Teruntong','Damansara Heights','47810','Chef','01-FEB-2023',NULL);  
+INSERT INTO STAFF VALUES('1012','04','Avianna','Peng','Mrs.','0160937431','Jalan Gajah Utama','Shah Alam','40160','Waiter','01-AUG-2022',NULL);  
+INSERT INTO STAFF VALUES('1013','05','Muhammad Huzaimi Halim','bin Zulfadhi','Mr.','0143883752','Jalan Setia Murni','Setia Alam','40710','Rider','01-APR-2022',NULL);  
+INSERT INTO STAFF VALUES('1014','08','Jane','Yao','Mrs.','0149009514','Jalan Nuri','Damansara Utama','47810','Chef','01-NOV-2022',NULL);  
+INSERT INTO STAFF VALUES('1015','01','Hui Xiang','Liow','Mr.','0136219353','Jalan Damansara','Damansara Utama','47400','Chef','01-AUG-2022',NULL);  
+INSERT INTO STAFF VALUES('1016','03','Li Ling','Chia','Mrs.','0186444938','Jalan SS4','Kelana Jaya','47300','Waiter','01-OCT-2022',NULL);  
+INSERT INTO STAFF VALUES('1017','06','Cen Yee','Tse','Ms.','0131708414','Jalan Besar','Klang','41000','Chef','01-NOV-2021',NULL);  
+INSERT INTO STAFF VALUES('1018','06','Abdul Ramaz','bin Omar','Mr.','0142441662','Jalan Bukit Jawa','Klang','41000','Chef','01-JUN-2021',NULL);  
+INSERT INTO STAFF VALUES('1019','01','Osman','bin Abdul Haleem','Mr.','0166872792','Jalan Nuri','Damansara Utama','47400','Rider','01-NOV-2021','Verbal Warning');  
+INSERT INTO STAFF VALUES('1020','06','Delime','binti Abdul Kaleem','Mrs.','0143109254','Jalan Bukit Jawa','Klang','41000','Waiter','01-SEP-2022',NULL);  
+INSERT INTO STAFF VALUES('1021','07','John','Prakesh','Mr.','0199416613','Jalan Subang','Subang Jaya','47600','Rider','01-DEC-2022','Written Warning');  
+INSERT INTO STAFF VALUES('1022','07','Qing Sheng','Song','Mr.','0184052618','Jalan Subang Permai','Subang Jaya','47600','Chef','01-JUL-2022',NULL);  
+INSERT INTO STAFF VALUES('1023','02','Nadeera','binti Zakaria','Ms.','0132244528','Jalan Bangsar','Bangsar Baru','59200','Cashier','01-MAY-2022',NULL);  
+INSERT INTO STAFF VALUES('1024','02','Jia Kuong','Yeow','Mr.','0125150152','Jalan Telawi','Bangsar Baru','59100','Chef','01-OCT-2022',NULL); 
+INSERT INTO STAFF VALUES('1025','07','Hui Jia', 'Chen','Mrs.','0194183482','Jalan PJS7','Subang Jaya','47500','Waiter','01-JUN-2021',NULL);  
+INSERT INTO STAFF VALUES('1026','08','Yong Zheng','Lai','Mr.','0199396220','Jalan Nuri','Damansara Utama','47810','Waiter','01-APR-2023',NULL);  
+INSERT INTO STAFF VALUES('1027','07','Muhammad Haji Raizuz','bin Nik Yani','Mr.','0163735252','Jalan Subang','Subang Jaya','47600','Chef','01-FEB-2023',NULL);  
+INSERT INTO STAFF VALUES('1028','04','Guo Wei','Yang','Mr.','0136907339','Jalan Merbah','Shah Alam','40000','Manager','01-FEB-2022',NULL);  
+INSERT INTO STAFF VALUES('1029','04','Yuen Ann','Chang','Ms.','0109305483','Jalan Merbah','Shah Alam','40000','Chef','01-MAR-2023',NULL);  
+INSERT INTO STAFF VALUES('1030','03','Ke Yu','Seah','Ms.','0197092308','Jalan SS2','Kelana Jaya','47300','Chef','01-FEB-2022',NULL);  
+
+
+CREATE TABLE CUSTOMER(  
+    customer_no CHAR(3) NOT NULL,  
+    first_name VARCHAR2(50) NOT NULL,  
+    last_name VARCHAR2(50) NOT NULL,  
+    title VARCHAR2(4),  
+    phone_no VARCHAR2(11) NOT NULL,  
+    street VARCHAR2(50) NOT NULL,  
+    suburb VARCHAR2(50) NOT NULL,  
+    postcode CHAR(5) NOT NULL,  
+    PRIMARY KEY(customer_no),
+    UNIQUE(phone_no),  
+    CONSTRAINT chk_phone_no_customer CHECK (LENGTH(phone_no) >= 10 AND REGEXP_LIKE(phone_no, '^[0-9]+$'))  
+);  
+
+
+INSERT INTO CUSTOMER VALUES(183,'Lin','Soon','Mrs.','0190682044','Jalan Citizen','Shah Alam','40610');  
+INSERT INTO CUSTOMER VALUES(257,'Ann Song','Chin','Ms.','0120775444','Jalan Puteri','Puchong','47100');  
+INSERT INTO CUSTOMER VALUES(315,'Roger','Yapp','Mr.','0159052163','Jalan SS7','Kelana Jaya','47301');  
+INSERT INTO CUSTOMER VALUES(376,'Mohammad Ishaq','bin Zuhairi','Mr.','0127101986','Jalan Besar','Klang','41000');  
+INSERT INTO CUSTOMER VALUES(449,'Kang Jin','Chok','Mr.','0192512268','Jalan Bukit Kota','Damansara Heights','50490');  
+INSERT INTO CUSTOMER VALUES(507,'Yee Seng','Chong','Mr.','0196282017','Jalan Setia Impian','Setia Alam','40710');  
+INSERT INTO CUSTOMER VALUES(512,'Suresh','a/l Thamil','Mr.','0132304959','Jalan SS21','Damansara Heights','47400');  
+INSERT INTO CUSTOMER VALUES(625,'Azmi','binti Yasin','Ms.','0164123832','Jalan SS5','Kelana Jaya','47301');  
+INSERT INTO CUSTOMER VALUES(689,'Johnathan','Looi','Mr.','0146697715','Jalan Bukit Kota','Damansara Heights',50490);  
+INSERT INTO CUSTOMER VALUES(764,'Tammy','Lim','Ms.','0146998452','Jalan Telawi','Bangsar Baru','59100');  
+INSERT INTO CUSTOMER VALUES(791,'Fatin','binti Suhiman','Mrs.','0128063344','Jalan Merbah','Shah Alam','40000');  
+INSERT INTO CUSTOMER VALUES(841,'Johnathan','Chin','Mr.','0103603909','Jalan Teknologi','Serdang','43400');  
+INSERT INTO CUSTOMER VALUES(843,'Ying Jie','Yapp','Ms.','0138766136','Jalan Setia Murni','Setia Alam','40710');  
+INSERT INTO CUSTOMER VALUES(937,'Jue Ee','Kim','Ms.','0102953900','Jalan Lagoon Selatan','Subang Jaya','47500');  
+INSERT INTO CUSTOMER VALUES(966,'Tommy','Tan','Mr.','0127673355','Jalan Taylors','Subang Jaya','47500');  
+INSERT INTO CUSTOMER VALUES(166,'Jin Qing','Tan','Ms.','0168855804','Jalan Seri Jalil','Bukit Jalil','45000');  
+INSERT INTO CUSTOMER VALUES(463,'Siong Yew','Yapp','Mr.','0174370403','Jalan Kebun','Shah Alam','40460');  
+
+
+CREATE TABLE ORDERS(	  
+    order_no CHAR(5) NOT NULL,  
+    customer_no CHAR(3) NOT NULL,  
+    order_date DATE NOT NULL,  
+    time CHAR(8) NOT NULL,  
+    telephone_operator CHAR(4),  
+    outlet_no CHAR(2) NOT NULL,  
+    rider_no CHAR(4),  
+    PRIMARY KEY(order_no),  
+    FOREIGN KEY (rider_no) REFERENCES STAFF(staff_no),  
+    FOREIGN KEY (customer_no) REFERENCES CUSTOMER(customer_no),  
+    FOREIGN KEY (outlet_no) REFERENCES OUTLETS(outlet_no),
+    UNIQUE(customer_no, order_date, time)  
+    );  
+
+
+INSERT INTO ORDERS VALUES (11967, 764, '02-JAN-2021', '21:14:34', NULL, '02', NULL);  
+INSERT INTO ORDERS VALUES (12003, 183, '19-MAR-2021', '14:30:00', NULL, '04', NULL);  
+INSERT INTO ORDERS VALUES (12678, 166, '20-MAY-2021', '13:01:25', NULL, '03', NULL);
+INSERT INTO ORDERS VALUES (13190, 512, '05-SEP-2021', '18:45:55', NULL, '01', NULL);  
+INSERT INTO ORDERS VALUES (14369, 937, '28-NOV-2021', '11:11:34', 1020, '01', 1019); 
+INSERT INTO ORDERS VALUES (14958, 843, '11-JAN-2022', '12:18:01', NULL, '05', NULL); 
+INSERT INTO ORDERS VALUES (15000, 791, '09-MAR-2022', '21:20:55', NULL, '04', NULL);  
+INSERT INTO ORDERS VALUES (15120, 625, '23-APR-2022', '17:51:39', NULL, '03', NULL);  
+INSERT INTO ORDERS VALUES (15871, 183, '03-JUN-2022', '13:12:46', NULL, '07', NULL);  
+INSERT INTO ORDERS VALUES (21014, 449, '15-AUG-2022', '10:51:33', NULL, '07', NULL);  
+INSERT INTO ORDERS VALUES (21038, 841, '30-OCT-2022', '19:00:28', '1004', '02', '1013');  
+INSERT INTO ORDERS VALUES (22468, 376, '31-DEC-2022', '12:30:43', '1001', '06', '1008');  
+INSERT INTO ORDERS VALUES (22721, 507, '01-JAN-2023', '19:43:17', NULL, '05', NULL);  
+INSERT INTO ORDERS VALUES (23305, 689, '05-FEB-2023', '13:24:05', NULL, '01', NULL);  
+INSERT INTO ORDERS VALUES (23879, 183, '24-FEB-2023', '11:00:22', '1025', '04', NULL);  
+INSERT INTO ORDERS VALUES (24801, 315, '21-MAR-2023', '15:15:59', '1007', '03', '1029');  
+INSERT INTO ORDERS VALUES (25111, 689, '29-APR-2023', '18:55:12', NULL, '01', NULL);
+INSERT INTO ORDERS VALUES (26000, 937, '30-MAY-2023', '20:26:18', '1002', '07', '1005');  
+INSERT INTO ORDERS VALUES (26026, 507, '03-JUN-2023', '14:41:04', NULL, '05', NULL);
+INSERT INTO ORDERS VALUES (26190, 764, '14-JUL-2023', '12:00:31', '1025', '04', NULL); 
+
+--This table does not have alternate key
+CREATE TABLE ORDERLINES(  
+    order_no CHAR(5) NOT NULL,  
+    item_no CHAR(3) NOT NULL,  
+    quantity NUMBER(3,0) NOT NULL,  
+    CONSTRAINT PK_orderline PRIMARY KEY (order_no, item_no),  
+    FOREIGN KEY (order_no) REFERENCES ORDERS(order_no),  
+    FOREIGN KEY (item_no) REFERENCES MENU(item_no),  
+    CONSTRAINT chk_quantity_orderlines CHECK (quantity >=1)  
+    );  
+
+--This index is created to allow the database system to quickly locate relevant rows based on orderline's item number, avoiding the need for a full table scan during search queries.
+CREATE INDEX orderlines_item_no_idx ON ORDERLINES(item_no);
+
+INSERT INTO ORDERLINES VALUES (11967, 'P02', 1);  
+INSERT INTO ORDERLINES VALUES (11967, 'B04', 2);  
+INSERT INTO ORDERLINES VALUES (12003, 'P03', 2);  
+INSERT INTO ORDERLINES VALUES (12678, 'P08', 1);
+INSERT INTO ORDERLINES VALUES (12678, 'B02', 3);
+INSERT INTO ORDERLINES VALUES (13190, 'P01', 2);  
+INSERT INTO ORDERLINES VALUES (13190, 'P10', 2);  
+INSERT INTO ORDERLINES VALUES (13190, 'S03', 4);  
+INSERT INTO ORDERLINES VALUES (13190, 'B02', 4);  
+INSERT INTO ORDERLINES VALUES (14369, 'P01', 1);  
+INSERT INTO ORDERLINES VALUES (14369, 'S01', 1); 
+INSERT INTO ORDERLINES VALUES (14958, 'P05', 2);
+INSERT INTO ORDERLINES VALUES (14958, 'S05', 1);
+INSERT INTO ORDERLINES VALUES (14958, 'B03', 3); 
+INSERT INTO ORDERLINES VALUES (15000, 'P02', 2);
+INSERT INTO ORDERLINES VALUES (15000, 'P10', 2);
+INSERT INTO ORDERLINES VALUES (15000, 'S04', 2);
+INSERT INTO ORDERLINES VALUES (15000, 'S01', 2);
+INSERT INTO ORDERLINES VALUES (15000, 'B04', 4);
+INSERT INTO ORDERLINES VALUES (15120, 'P10', 1);  
+INSERT INTO ORDERLINES VALUES (15120, 'P07', 1);  
+INSERT INTO ORDERLINES VALUES (15120, 'B02', 3);  
+INSERT INTO ORDERLINES VALUES (15871, 'P05', 2);  
+INSERT INTO ORDERLINES VALUES (15871, 'P03', 1);  
+INSERT INTO ORDERLINES VALUES (15871, 'P09', 2);  
+INSERT INTO ORDERLINES VALUES (15871, 'S04', 2);  
+INSERT INTO ORDERLINES VALUES (15871, 'B01', 5);  
+INSERT INTO ORDERLINES VALUES (21014, 'P01', 1);  
+INSERT INTO ORDERLINES VALUES (21014, 'S05', 2);  
+INSERT INTO ORDERLINES VALUES (21038, 'P08', 1);  
+INSERT INTO ORDERLINES VALUES (21038, 'P01', 1);  
+INSERT INTO ORDERLINES VALUES (21038, 'P05', 1);  
+INSERT INTO ORDERLINES VALUES (22468, 'P06', 3);  
+INSERT INTO ORDERLINES VALUES (22721, 'P09', 1);  
+INSERT INTO ORDERLINES VALUES (22721, 'B05', 2);  
+INSERT INTO ORDERLINES VALUES (23305, 'P04', 1);  
+INSERT INTO ORDERLINES VALUES (23305, 'S02', 1);  
+INSERT INTO ORDERLINES VALUES (23305, 'B04', 2);  
+INSERT INTO ORDERLINES VALUES (23879, 'P07', 1);  
+INSERT INTO ORDERLINES VALUES (24801, 'P02', 1);  
+INSERT INTO ORDERLINES VALUES (24801, 'S04', 2); 
+INSERT INTO ORDERLINES VALUES (25111, 'P04', 1);
+INSERT INTO ORDERLINES VALUES (25111, 'P10', 1);
+INSERT INTO ORDERLINES VALUES (25111, 'S01', 2); 
+INSERT INTO ORDERLINES VALUES (26000, 'P03', 2);  
+INSERT INTO ORDERLINES VALUES (26000, 'B04', 4);  
+INSERT INTO ORDERLINES VALUES (26026, 'P03', 1);
+INSERT INTO ORDERLINES VALUES (26026, 'S03', 1);
+INSERT INTO ORDERLINES VALUES (26026, 'S02', 1);
+INSERT INTO ORDERLINES VALUES (26190, 'P08', 1);  
+  
+ 
+  
+
+--This table does not have alternate key
+CREATE TABLE VEHICLES (	 
+    vehicle_no VARCHAR2(8) NOT NULL,   
+    product VARCHAR2(30) NOT NULL,   
+    type VARCHAR2(10) NOT NULL,   
+    purchase_date DATE NOT NULL,   
+    last_checked_date DATE NOT NULL,   
+    mileage INTEGER NOT NULL,   
+    outlet_no CHAR(2),   
+    PRIMARY KEY(vehicle_no),   
+    FOREIGN KEY (outlet_no) REFERENCES OUTLETS (outlet_no),   
+    CONSTRAINT chk_last_checked_date CHECK (last_checked_date >= purchase_date)  
+    );   
+
+
+INSERT INTO VEHICLES VALUES ('AKG 6233', 'Yamaha', 'Motorcycle', '08-JUL-2021', '08-JUL-2023', 20752, '01');  
+INSERT INTO VEHICLES VALUES ('ALG 7421', 'Perodua', 'Car', '27-JUN-2021', '21-FEB-2023', 19842, '08');  
+INSERT INTO VEHICLES VALUES ('ALG 8866', 'Honda', 'Motorcycle', '20-OCT-2021', '24-JAN-2023', 18621,'03');  
+INSERT INTO VEHICLES VALUES ('ALX 5874', 'Kawasaki', 'Motorcycle', '30-AUG-2021', '01-JUN-2022', 21097, '07');  
+INSERT INTO VEHICLES VALUES ('AMX 6323', 'Yamaha', 'Motorcycle', '05-MAR-2022', '10-MAY-2023', 11759, '02');  
+INSERT INTO VEHICLES VALUES ('BEQ 8116', 'Toyota', 'Car', '03-DEC-2022', '15-JUL-2023', 10324, '06');  
+INSERT INTO VEHICLES VALUES ('BLK 9876', 'Yamaha', 'Motorcycle', '08-NOV-2022', '08-NOV-2022', 17620, '05');  
+INSERT INTO VEHICLES VALUES ('BRK 6174', 'Kawasaki', 'Motorcycle', '01-JAN-2021', '18-APR-2023', 22689, '02');  
+INSERT INTO VEHICLES VALUES ('KFQ 1032', 'Yamaha', 'Motorcycle', '06-JUN-2021', '06-JUN-2021', 9805, '03');  
+INSERT INTO VEHICLES VALUES ('PCY 5915', 'Honda', 'Motorcycle', '25-MAR-2021', '12-JUL-2023', 25891, '05');  
+INSERT INTO VEHICLES VALUES ('PET 1286', 'Kawasaki', 'Motorcycle', '12-FEB-2022', '11-JUN-2023', 21932, '03');  
+INSERT INTO VEHICLES VALUES ('PNY 5797', 'Suzuki', 'Motorcycle', '12-APR-2021', '10-DEC-2021', 30864, '01');  
+INSERT INTO VEHICLES VALUES ('RAQ 6946', 'Perodua', 'Car', '24-SEP-2022', '14-JAN-2023', 8621, '08'); 
+INSERT INTO VEHICLES VALUES ('VBG 1079', 'Kawasaki', 'Motorcycle', '19-AUG-2021', '19-AUG-2021', 12753, '06');  
+INSERT INTO VEHICLES VALUES ('VFQ 3052', 'Toyota', 'Car', '14-APR-2023', '14-APR-2023', 5361, '04');  
+INSERT INTO VEHICLES VALUES ('VKK 1423', 'Perodua', 'Car', '06-JAN-2021', '09-NOV-2022', 20379, '07'); 
+INSERT INTO VEHICLES VALUES ('VKU 2918', 'Suzuki', 'Motorcycle', '02-MAY-2023', '02-MAY-2023', 9882, '02');  
+INSERT INTO VEHICLES VALUES ('VKW 3304', 'Suzuki', 'Motorcycle', '02-MAR-2021', '12-NOV-2022', 15832, '04');  
+INSERT INTO VEHICLES VALUES ('WCU 5234', 'Suzuki', 'Motorcycle', '28-APR-2023', '28-APR-2023', 6597, '01');  
+INSERT INTO VEHICLES VALUES ('WXW 1415', 'Yamaha', 'Motorcycle', '03-MAY-2021', '08-JUL-2023', 32084, '04');  
+
+
+CREATE TABLE FEEDBACK (	  
+    feedback_id CHAR(5) NOT NULL,   
+    title VARCHAR2(50) NOT NULL,   
+    description CLOB NOT NULL,   
+    feedback_date DATE NOT NULL,   
+    order_no CHAR(5) NOT NULL,   
+    PRIMARY KEY(feedback_id),   
+    FOREIGN KEY (order_no) REFERENCES ORDERS (order_no),
+    UNIQUE(order_no)  
+    ); 
+
+INSERT INTO FEEDBACK VALUES('F0001', 'Suggestion For Pizza Base', 'The crust is typically a little too thick for my tastes, but that is just a matter of preference.  If you could provide different crust options, such as a thinner crust choice for those who prefer a lighter and crispier base, that would be great.', '10-MAY-2021', 13190);  
+INSERT INTO FEEDBACK VALUES('F0002','Poor Value for Money and Bad Food Quality', 'The pizza is overpriced and extremely small. The mushroom pizza is too soggy and very few mushroom on top of it.', '25-APR-2022', 15120);  
+INSERT INTO FEEDBACK VALUES('F0003', 'Suggestion For Margherita Pizza', 'The pizzas taste extremely good especially the Margherita pizza!  However, I believe that adding more olive oil will improve and elevate the flavour.', '20-OCT-2022', 21038);  
+INSERT INTO FEEDBACK VALUES('F0004', 'Mishandled Food', 'The order arrived in a bad condition. All the toppings slid off the top of my pizza and drinks spilled. The rider did not care about the food at all.', '31-DEC-2022', 22468);  
+INSERT INTO FEEDBACK VALUES('F0005', 'Wrong Order', 'The rider came with wrong order. We ordered a BBQ Chicken Pizza,  garlic bread and two cans of Sprite but they missed out the drinks and delivered another pizza instead. I ask for a refund but the rider ask me to call the hotline which went unanswered after several calls.', '5-FEB-2023', 23305);  
+INSERT INTO FEEDBACK VALUES('F0006', 'Missing Food', 'I had placed my order around 8.30pm. I waited for it for about two hours, but I did not get any food. I made a few calls to the shop but no one answered. It is a waste of money.', '21-MAR-2023', 24801);  
+INSERT INTO FEEDBACK VALUES('F0007', 'Dissapointing Customer Service', 'My pizza was not made yet, but the restaurant refused to change the crust upon request. It was frustrating as it is just a minor adjustment when it is actually possible.', '02-JUN-2023', 26000);  
+INSERT INTO FEEDBACK VALUES('F0008', 'Pleasant Experience', 'The pizzas were absolutely delicious, with a crisp crust and flavorful toppings. The delivery was prompt. Keep up the good work!', '14-JUL-2023', 26190);  
+
+
+CREATE TABLE SUPPLIER (  
+  supplier_no CHAR(5) NOT NULL,  
+  name VARCHAR2(30) NOT NULL,  
+  contact VARCHAR2(11) NOT NULL,  
+  PRIMARY KEY (supplier_no),
+  UNIQUE(contact),
+  CONSTRAINT chk_contact_supplier CHECK (LENGTH(contact) >= 10 AND REGEXP_LIKE(contact, '^[0-9]+$'))   
+  );  
+
+
+INSERT INTO SUPPLIER VALUES ('SP001', 'Tropicana Farms', '0109874567');  
+INSERT INTO SUPPLIER VALUES ('SP002', 'Fromage Delights', '0117897654');  
+INSERT INTO SUPPLIER VALUES ('SP003', 'Golden Grain', '0125439876');  
+INSERT INTO SUPPLIER VALUES ('SP004', 'Spicy Delight', '0134558977');  
+INSERT INTO SUPPLIER VALUES ('SP005', 'Fresh Fungi Farms', '0142566798');  
+INSERT INTO SUPPLIER VALUES ('SP006', 'Onion Paradise', '0156342789');  
+INSERT INTO SUPPLIER VALUES ('SP007', 'Herb Haven', '0169018567');  
+INSERT INTO SUPPLIER VALUES ('SP008', 'Farm Fresh Poultry', '0178904367');  
+INSERT INTO SUPPLIER VALUES ('SP009', 'Mediterranean', '0189642319');  
+INSERT INTO SUPPLIER VALUES ('SP010', 'Aroma Spice Traders', '0192268430');  
+INSERT INTO SUPPLIER VALUES ('SP011', 'Savory Cured Meats', '0189738721');  
+INSERT INTO SUPPLIER VALUES ('SP012', 'Tropical Delights', '0179645672');  
+INSERT INTO SUPPLIER VALUES ('SP013', 'Leafy Greens Farms','0169483029');  
+INSERT INTO SUPPLIER VALUES ('SP014', 'Prime Cuts Meats', '0158392019');  
+INSERT INTO SUPPLIER VALUES ('SP015', 'Fresh Harvest', '0143205849');  
+INSERT INTO SUPPLIER VALUES ('SP016', 'Sea Treasure', '0132940593');  
+INSERT INTO SUPPLIER VALUES ('SP017', 'Red Sauce Co.', '0125930359');  
+INSERT INTO SUPPLIER VALUES ('SP018', 'Smoky Grill Sauces', '0113820930'); 
+INSERT INTO SUPPLIER VALUES ('SP019', 'Spice Haven Farms', '0103829482');  
+INSERT INTO SUPPLIER VALUES ('SP020', 'Dairy Delights', '0198573902');  
+
+
+CREATE TABLE INGREDIENTS (  
+  ingredient_no CHAR(5) NOT NULL,  
+  name VARCHAR2(30) NOT NULL,  
+  price FLOAT NOT NULL,  
+  supplier_no CHAR(5) NOT NULL,  
+  PRIMARY KEY (ingredient_no),  
+  FOREIGN KEY (supplier_no) REFERENCES SUPPLIER (supplier_no),  
+  CONSTRAINT chk_price_ingredient CHECK (price>0),
+  UNIQUE(name)  
+  );  
+
+INSERT INTO INGREDIENTS VALUES ('I0001', 'Basil', 1.75, 'SP007');  
+INSERT INTO INGREDIENTS VALUES ('I0002', 'Green Peppers', 2.50, 'SP015');  
+INSERT INTO INGREDIENTS VALUES ('I0003', 'Pineapple', 4.75, 'SP012');  
+INSERT INTO INGREDIENTS VALUES ('I0004', 'Chicken', 6.50, 'SP008');  
+INSERT INTO INGREDIENTS VALUES ('I0005', 'Jalapenos', 2.75, 'SP019');  
+INSERT INTO INGREDIENTS VALUES ('I0006', 'Spinach', 3.25, 'SP013');  
+INSERT INTO INGREDIENTS VALUES ('I0007', 'Mushroom', 4.50, 'SP005');  
+INSERT INTO INGREDIENTS VALUES ('I0008', 'Flour', 3.25, 'SP003');  
+INSERT INTO INGREDIENTS VALUES ('I0009', 'Tomato Sauce', 3.50, 'SP017');  
+INSERT INTO INGREDIENTS VALUES ('I0010', 'Tomato', 5.99, 'SP001');  
+INSERT INTO INGREDIENTS VALUES ('I0011', 'Anchovies', 5.99, 'SP016');  
+INSERT INTO INGREDIENTS VALUES ('I0012', 'Beef', 7.99, 'SP014');  
+INSERT INTO INGREDIENTS VALUES ('I0013', 'Onion', 2.99, 'SP006');  
+INSERT INTO INGREDIENTS VALUES ('I0014', 'Pepperoni', 9.99, 'SP004');  
+INSERT INTO INGREDIENTS VALUES ('I0015', 'BBQ Sauce', 4.25, 'SP018'); 
+INSERT INTO INGREDIENTS VALUES ('I0016', 'Garlic', 2.25, 'SP010');  
+INSERT INTO INGREDIENTS VALUES ('I0017', 'Mozzarella Cheese', 6.99, 'SP020');  
+INSERT INTO INGREDIENTS VALUES ('I0018', 'Ham', 8.50, 'SP011');  
+INSERT INTO INGREDIENTS VALUES ('I0019', 'Cheese', 7.50, 'SP002');  
+INSERT INTO INGREDIENTS VALUES ('I0020', 'Olive', 3.99, 'SP009');  
+
+
+CREATE TABLE SUPPLIERLINES (  
+  supplier_line_no CHAR(6) NOT NULL,  
+  outlet_no CHAR(2) NOT NULL,  
+  supplier_no CHAR(5) NOT NULL,  
+  ingredient_no CHAR(5) NOT NULL,  
+  quantity NUMBER(3,0) NULL,  
+  supplier_line_date DATE NOT NULL,  
+  time CHAR(8) NOT NULL,  
+  PRIMARY KEY (supplier_line_no),  
+  FOREIGN KEY (outlet_no) REFERENCES OUTLETS(outlet_no),  
+  FOREIGN KEY (supplier_no) REFERENCES SUPPLIER(supplier_no),  
+  FOREIGN KEY (ingredient_no) REFERENCES INGREDIENTS(ingredient_no),  
+  CONSTRAINT chk_quantity_supplierline CHECK (quantity >=1),
+  UNIQUE(outlet_no, ingredient_no, supplier_line_date, time)  
+  );  
+
+INSERT INTO SUPPLIERLINES VALUES ('SL0001', '03', 'SP007', 'I0001', 5, '05-JAN-2021', '09:30:12');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0002', '05', 'SP011', 'I0018', 3, '31-MAR-2021', '14:15:15');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0003', '01', 'SP003', 'I0008', 5, '30-MAY-2021', '11:45:32');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0004', '04', 'SP008', 'I0004', 10, '02-JUL-2021', '16:20:45');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0005', '02', 'SP011', 'I0018', 3, '29-SEP-2021', '13:10:03');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0006', '03', 'SP016', 'I0011', 10, '30-NOV-2021', '10:00:35');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0007', '02', 'SP020', 'I0017', 5, '26-FEB-2022', '15:30:26');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0008', '06', 'SP015', 'I0002', 20, '29-APR-2022', '12:00:29');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0009', '07', 'SP015', 'I0002', 15, '01-JUN-2022', '09:45:17');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0010', '08', 'SP014', 'I0012', 5, '30-AUG-2022', '11:20:19');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0011', '04', 'SP016', 'I0011', 8, '05-OCT-2022', '14:00:09');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0012', '02', 'SP004', 'I0014', 5, '31-DEC-2022', '12:30:39');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0013', '06', 'SP006', 'I0013', 10, '29-JAN-2023', '16:45:16');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0014', '05', 'SP005', 'I0007', 5, '31-MAR-2023', '13:40:08');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0015', '03', 'SP016', 'I0011', 10, '31-MAY-2023', '10:30:49');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0016', '01', 'SP009', 'I0020', 10, '02-JUN-2023', '15:00:46');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0017', '08', 'SP002', 'I0019', 5, '28-JUN2023', '12:28:40');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0018', '07', 'SP013', 'I0006', 5, '01-JUL-2023', '11:38:13');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0019', '04', 'SP012', 'I0003', 10, '15-JUL-2023', '10:48:30');  
+INSERT INTO SUPPLIERLINES VALUES ('SL0020', '05', 'SP019', 'I0005', 5, '30-JUL-2023', '13:08:37');  
+
+
+CREATE TABLE RESERVATION (	  
+    reservation_id CHAR(5) NOT NULL,   
+    outlet_no CHAR(2) NOT NULL,   
+    customer_no CHAR(3) NOT NULL,
+    number_of_guests NUMBER(2,0) NOT NULL,   
+    reservation_date DATE NOT NULL,   
+    reservation_time CHAR(8) NOT NULL,   
+    remark CLOB,   
+    PRIMARY KEY(reservation_id),   
+    FOREIGN KEY (outlet_no) REFERENCES OUTLETS (outlet_no),   
+    FOREIGN KEY (customer_no) REFERENCES CUSTOMER (customer_no),   
+    CONSTRAINT chk_number_of_guests CHECK (number_of_guests>0),
+    UNIQUE(customer_no, reservation_date, reservation_time)  
+    );   
+
+INSERT INTO RESERVATION VALUES ('R0001', '08', 512, 6, '19-JUL-2023', '11:30:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0002', '03', 315, 4, '20-JUL-2023', '20:30:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0003', '04', 791, 8, '22-JUL-2023', '13:00:00', 'Assign a downstairs seat as there will be elderly guests');  
+INSERT INTO RESERVATION VALUES ('R0004', '02', 764, 7, '22-JUL-2023', '14:45:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0005', '03', 376, 10, '23-JUL-2023', '11:30:00', 'Provide a private room for business meeting');  
+INSERT INTO RESERVATION VALUES ('R0006', '05', 507, 5, '23-JUL-2023', '16:45:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0007', '02', 966, 3, '25-JUL-2023', '17:30:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0008', '07', 937, 2, '28-JUL-2023', '19:30:00', 'Place a special anniversary message on the table');  
+INSERT INTO RESERVATION VALUES ('R0009', '01', 843, 5, '28-JUL-2023', '19:30:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0010', '01', 689, 8, '31-JUL-2023', '20:00:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0011', '08', 937, 12, '01-AUG-2023', '18:30:00', 'Arrange a long or round table instead of separating the group');  
+INSERT INTO RESERVATION VALUES ('R0012', '04', 183, 3, '03-AUG-2023', '20:30:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0013', '07', 449, 8, '03-AUG-2023', '12:30:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0014', '05', 625, 7, '08-AUG-2023', '13:30:00', NULL);  
+INSERT INTO RESERVATION VALUES ('R0015', '02', 841, 9, '15-AUG-2023', '11:45:00', NULL);
+INSERT INTO RESERVATION VALUES ('R0016', '03', 166, 3, '15-AUG-2023', '14:45:00', NULL);
+INSERT INTO RESERVATION VALUES ('R0017', '04', 507, 4, '15-AUG-2023', '15:00:00', NULL);
+INSERT INTO RESERVATION VALUES ('R0018', '02', 966, 2, '16-AUG-2023', '12:30:00', NULL);
+INSERT INTO RESERVATION VALUES ('R0019', '03', 376, 8, '16-AUG-2023', '11:45:00', 'Provide a private room for business meeting');
+INSERT INTO RESERVATION VALUES ('R0020', '01', 512, 3, '17-AUG-2023', '18:30:00', NULL);
+ 
+--The views are created to be used in user query
+CREATE VIEW CUSTOMER_ORDER AS(
+SELECT
+	customer_no, first_name,last_name
+FROM CUSTOMER);
+
+
+CREATE VIEW STAFF_CUSTOMER AS(
+SELECT
+	staff.staff_no,staff.last_name AS staff_surname, staff.outlet_no AS staff_outlet_no,customer.customer_no,customer.street AS customer_street,customer.suburb AS customer_suburb,orders.order_no
+FROM staff,customer,orders
+WHERE (staff.staff_no=orders.telephone_operator OR staff.staff_no=orders.rider_no)
+AND customer.customer_no =orders.customer_no);
+
+

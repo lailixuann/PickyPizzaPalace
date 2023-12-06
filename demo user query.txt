@@ -1,0 +1,67 @@
+CONSTRAINT DEMO
+
+INSERT INTO MENU VALUES ('P10', 'Tuna Cheese Bomb Pizza', 'Pizza',-5.90);
+ 
+INSERT INTO CUSTOMER VALUES(121,'Lim','Wei','Mrs.','019068204g','Jalan Citizen','Shah Alam','40610'); 
+
+INSERT INTO ORDERLINES VALUES (23305, 'S05', 0);   
+
+INSERT INTO VEHICLES VALUES ('AMX 4843', 'Yamaha', 'Motorcycle', '05-MAR-2022', '05-MAR-2021', 11759, '02');
+
+INSERT INTO RESERVATION VALUES ('R0021', '08', 512, 0, '19-JUL-2023', '11:30:00', NULL);  
+
+
+
+
+(a) Picky Pizza Palace wants to organize a customer appreciation program to reward and show gratitude to loyal customers. The restaurant decided to give out vouchers to customers who have placed more than 1 order in the past half year. 
+
+SELECT *
+FROM CUSTOMER_ORDER
+WHERE customer_no IN (
+    SELECT customer_no FROM (
+        SELECT customer_no, COUNT(*) AS order_count
+        FROM ORDERS
+        WHERE orders.order_date >= ADD_MONTHS(SYSDATE, -6)
+        GROUP BY customer_no)
+WHERE order_count > 1);
+
+
+(b) In conjunction with International Women's Day, various outlets of Picky Pizza Palace will launch a variety of special combos featuring the popular items among women to target the female audiences. In order to identify the specific items to be included in the combos for the upcoming promotion, a research report is being generated that will include items ordered by female customers in quantities greater than one per order in the previous year (2022).
+
+SELECT orders.order_no, customer.customer_no, outlets.outlet_no, menu.description, orderlines.quantity
+FROM orders, orderlines, customer, outlets, menu 
+WHERE orders.order_no = orderlines.order_no
+AND orders.customer_no = customer.customer_no
+AND orders.outlet_no = outlets.outlet_no
+AND orderlines.item_no = menu.item_no
+AND orders.order_date LIKE '%2022'
+AND (customer.title = 'Mrs.' OR customer.title = 'Ms.')
+GROUP BY orders.order_no, customer.customer_no, outlets.outlet_no, menu.description, orderlines.quantity
+HAVING orderlines.quantity > 1
+
+(c) Picky Pizza Palace has a list of suppliers that supply different ingredients. In order to have better quality control and cost management at the same time, Picky Pizza Palace wants to filter out the ingredients that are freshly supplied from farms and the ingredients that are supplied in more than five quantities in a row. This can help the restaurant negotiate better pricing with these suppliers, who could supply fresh ingredients in large quantities.
+
+SELECT supplier.supplier_no, supplier.name,supplierlines.quantity
+FROM SUPPLIER
+RIGHT OUTER JOIN SUPPLIERLINES ON SUPPLIER.supplier_no = SUPPLIERLINES.supplier_no
+WHERE SUPPLIERLINES.quantity >= 5
+AND SUPPLIER.name LIKE '%Farm%'  
+AND SUPPLIERLINES.supplier_line_date >= '01-JAN-2022';
+
+d) Picky Pizza Palace is implementing a new system to evaluate employee performance and provide rewards. This system aims to recognize exceptional performance through bonuses or promotions. To ensure fairness and transparency, the shop will consider feedback from each staff's manager. Hence, a staff and their respective manager report will be created to streamline and simplify the assessment process.
+
+SELECT e.staff_no AS "EMPLOYEE_STAFF_NO", e.first_name AS "EMPLOYEE_FIRST_NAME", e.last_name AS "EMPLOYEE_LAST_NAME", e.position, e.outlet_no, 
+m.staff_no AS "MANAGER_STAFF_NO", m.first_name AS "MANAGER_FIRST_NAME", m.last_name AS "MANAGER_LAST_NAME" 
+FROM staff e, staff m 
+WHERE e.outlet_no = m.outlet_no 
+AND m.position = 'Manager' 
+AND e.staff_no NOT IN (
+    SELECT staff_no 
+    FROM staff 
+    WHERE position = 'Manager');
+
+e) List the staff whose surnames start with ‘Ch’ and who have served customers with addresses containing ‘Jaya’ 
+SELECT * 
+FROM staff_customer
+WHERE (customer_suburb LIKE '%Jaya%' OR customer_street LIKE '%Jaya')
+AND staff_surname LIKE 'Ch%'
